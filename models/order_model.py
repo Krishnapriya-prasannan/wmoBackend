@@ -61,3 +61,57 @@ def get_order_progress():
     finally:
         if db:
             close_db(db)
+
+
+# ✅ Get all pending orders
+def get_available_orders():
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM orders WHERE status = 'pending'")
+        orders = cursor.fetchall()
+        return orders
+    except Exception as e:
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
+
+# ✅ Assign order to picker (take order)
+def assign_order_to_picker(order_id, picker_id):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE orders
+            SET assigned_to = %s, status = 'in_progress'
+            WHERE order_id = %s AND status = 'pending'
+        """, (picker_id, order_id))
+        db.commit()
+        return cursor.rowcount > 0   # True if updated
+    except Exception as e:
+        db.rollback()
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
+
+
+# ✅ Complete order
+def complete_order(order_id, picker_id):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE orders
+            SET status = 'completed'
+            WHERE order_id = %s AND assigned_to = %s AND status = 'in_progress'
+        """, (order_id, picker_id))
+        db.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        db.rollback()
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
