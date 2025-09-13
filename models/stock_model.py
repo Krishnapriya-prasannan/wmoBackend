@@ -32,7 +32,7 @@ def assign_stock_to_picker(stock_id, picker_id):
         cursor = db.cursor()
         cursor.execute("""
             UPDATE stock
-            SET assigned_to = %s, stock_status = 'in_placement'
+            SET assigned_to = %s, status = 'in_placement'
             WHERE stock_id = %s
         """, (picker_id, stock_id))
         db.commit()
@@ -49,10 +49,10 @@ def get_stock_status():
         db = get_db()
         cursor = db.cursor(dictionary=True)
         cursor.execute("""
-            SELECT s.stock_id, i.item_name, s.current_stock, s.stock_status, l.location_id
+            SELECT s.stock_id, i.category, s.current_stock, s.status, l.location_id
             FROM stock s
-            JOIN items i ON s.stock_item_id = i.item_id
-            LEFT JOIN warehouse_locations l ON s.stock_location_id = l.location_id
+            JOIN items i ON s.item_id = i.item_id
+            LEFT JOIN warehouse_locations l ON s.location_id = l.location_id
         """)
         return cursor.fetchall()
     except Exception as e:
@@ -67,10 +67,10 @@ def get_stockout_alerts():
         db = get_db()
         cursor = db.cursor(dictionary=True)
         cursor.execute("""
-            SELECT i.item_id, i.item_name, SUM(s.current_stock) AS total_stock
+            SELECT i.item_id, i.category, SUM(s.current_stock) AS total_stock
             FROM items i
-            LEFT JOIN stock s ON i.item_id = s.stock_item_id
-            GROUP BY i.item_id, i.item_name
+            LEFT JOIN stock s ON i.item_id = s.item_id
+            GROUP BY i.item_id, i.category
             HAVING total_stock < 10   -- threshold for low stock
         """)
         return cursor.fetchall()

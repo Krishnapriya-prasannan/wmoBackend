@@ -18,18 +18,28 @@ def create_user(username, password, role, status=None):
         cursor.close()
         close_db(conn)
 
-# ✅ Fetch user by username (for login)
-def get_user_by_username(username):
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+
+
+def authenticate_user(username, password):
     try:
-        query = "SELECT * FROM users WHERE username=%s"
-        cursor.execute(query, (username,))
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT user_id, password, role FROM users WHERE username=%s", (username,))
         user = cursor.fetchone()
-        return user
+        
+        if not user:
+            return {"success": False, "error": "User not found"}
+        
+        if password == user['password']:
+            return {"success": True, "user_id": user['user_id'], "role": user['role']}
+        else:
+            return {"success": False, "error": "Invalid password"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
     finally:
-        cursor.close()
-        close_db(conn)
+        if db:
+            close_db(db)
+
 
 # ✅ Update picker status (in_work / rest)
 def update_picker_status(user_id, status):
