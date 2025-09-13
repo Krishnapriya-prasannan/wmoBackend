@@ -1,45 +1,63 @@
 from db import get_db, close_db
 
-def get_orders_for_picker(picker_id):
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT o.order_id, o.order_ref, o.status, o.created_at, oi.item_id, oi.quantity
-        FROM orders o
-        LEFT JOIN order_items oi ON o.order_id = oi.order_id
-        WHERE o.assigned_to = %s
-    """, (picker_id,))
-    results = cursor.fetchall()
-    cursor.close()
-    close_db(conn)
-
-    # Format orders by order_id
-    orders = {}
-    for row in results:
-        oid = row['order_id']
-        if oid not in orders:
-            orders[oid] = {
-                'order_id': oid,
-                'order_ref': row['order_ref'],
-                'status': row['status'],
-                'created_at': str(row['created_at']),
-                'items': []
-            }
-        if row['item_id']:
-            orders[oid]['items'].append({'item_id': row['item_id'], 'quantity': row['quantity']})
-
-    return list(orders.values())
-
-def start_order(order_id):
-    conn = get_db()
-    cursor = conn.cursor()
+def create_order(order_items, created_by):
     try:
-        query = "UPDATE orders SET status='in_progress' WHERE order_id=%s"
-        cursor.execute(query, (order_id,))
-        conn.commit()
+        db = get_db()
+        cursor = db.cursor()
+
+        # Insert into orders table
+        cursor.execute("""
+            INSERT INTO orders (order_status, created_by)
+            VALUES ('pending', %s)
+        """, (created_by,))
+        order_id = cursor.lastrowid
+
+        # Insert order items
+        for item in order_items:
+            cursor.execute("""
+                INSERT INTO order_items (order_id, item_id, quantity)
+                VALUES (%s, %s, %s)
+            """, (order_id, item['item_id'], item['quantity']))
+
+        db.commit()
         return True
     except Exception as e:
         return str(e)
     finally:
-        cursor.close()
-        close_db(conn)
+        if db:
+            close_db(db)
+
+
+def assign_order_to_picker(order_id, picker_id):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE orders
+            SET assigned_to = %s, order_status = 'in_progress'
+            WHERE order_id = %s
+        """, (picker_id, order_id))
+        db.commit()
+        return True
+    except Exception as e:
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
+
+
+def get_order_progress():
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT o.order_id, o.order_status, u.username AS assigned_picker
+            FROM orders o
+            LEFT JOIN users u ON o.assigned_to = u.user_id
+        """)
+        return cursor.fetchall()
+    except Exception as e:
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
