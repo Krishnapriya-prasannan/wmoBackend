@@ -79,3 +79,63 @@ def get_stockout_alerts():
     finally:
         if db:
             close_db(db)
+
+# ✅ Get all available (new) stocks
+def get_available_stocks():
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM stock WHERE status = 'new'")  # table name corrected
+        stocks = cursor.fetchall()
+        cursor.close()
+        return stocks
+    except Exception as e:
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
+
+
+# ✅ Assign stock to picker (new → in_placement)
+def assign_stock_to_picker(stock_id, picker_id):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE stock
+            SET status = 'in_placement',
+                assigned_to = %s,
+                updated_at = NOW()
+            WHERE stock_id = %s AND status = 'new'
+        """, (picker_id, stock_id))
+        db.commit()
+        rows = cursor.rowcount
+        cursor.close()
+        return rows > 0
+    except Exception as e:
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
+
+
+# ✅ Complete stock placement (in_placement → placed)
+def complete_stock_placement(stock_id, picker_id):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE stock
+            SET status = 'placed',
+                updated_at = NOW()
+            WHERE stock_id = %s AND assigned_to = %s AND status = 'in_placement'
+        """, (stock_id, picker_id))
+        db.commit()
+        rows = cursor.rowcount
+        cursor.close()
+        return rows > 0
+    except Exception as e:
+        return str(e)
+    finally:
+        if db:
+            close_db(db)
