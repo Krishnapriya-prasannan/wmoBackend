@@ -3,6 +3,8 @@ from flask_cors import CORS
 from routes.manager_routes import manager_bp
 from routes.picker_routes import picker_bp,stock_bp
 from routes.placement import placement_bp
+from routes.route_optimization import route_bp  
+
 
 app = Flask(__name__)
 CORS(app)  # allow cross-origin requests
@@ -12,6 +14,7 @@ app.register_blueprint(manager_bp)
 app.register_blueprint(picker_bp)
 app.register_blueprint(stock_bp)
 app.register_blueprint(placement_bp, url_prefix='/placement')
+app.register_blueprint(route_bp, url_prefix="/route")
 
 
 # Basic home route
