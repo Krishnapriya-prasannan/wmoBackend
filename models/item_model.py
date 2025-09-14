@@ -1,5 +1,5 @@
 from db import get_db, close_db
-
+import json
 # ✅ Add a new item
 def create_item(item_id, category, subcategory, size, color, material, unit_price, shelf_life, dimensions):
     """
@@ -21,7 +21,7 @@ def create_item(item_id, category, subcategory, size, color, material, unit_pric
             material,
             unit_price,
             shelf_life,
-            str(dimensions)  # store as JSON string
+            json.dumps(dimensions)  # <-- store proper JSON string
         ))
         db.commit()
         return True
@@ -37,22 +37,34 @@ def get_all_items():
         db = get_db()
         cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT * FROM items")
-        return cursor.fetchall()
-    except Exception as e:
-        return str(e)
+        rows = cursor.fetchall()
+        for row in rows:
+            if row.get('dimensions'):
+                import json
+                try:
+                    row['dimensions'] = json.loads(row['dimensions'])
+                except:
+                    row['dimensions'] = None
+        return rows
     finally:
         if db:
             close_db(db)
+
 # ✅ Optional: Fetch item by ID
 def get_item_by_id(item_id):
     try:
         db = get_db()
         cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT * FROM items WHERE item_id = %s", (item_id,))
-        return cursor.fetchone()
+        row = cursor.fetchone()
+        if row and row.get('dimensions'):
+            try:
+                row['dimensions'] = json.loads(row['dimensions'])
+            except:
+                row['dimensions'] = None
+        return row
     except Exception as e:
         return str(e)
     finally:
         if db:
             close_db(db)
-            

@@ -14,17 +14,22 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    
-    result = authenticate_user(username, password)
-    
+    role = data.get('login_type')  # manager/picker
+
+    result = authenticate_user(username, password, role)
+
     if result.get("success"):
         return jsonify({
+            "success": True,           # <-- add this
             "message": "Login successful",
             "user_id": result.get("user_id"),
             "role": result.get("role")
         })
     else:
-        return jsonify({"error": result.get("error")}), 401
+        return jsonify({
+            "success": False,          # <-- add this
+            "error": result.get("error")
+        }), 401
 
 
 # -------------------------------

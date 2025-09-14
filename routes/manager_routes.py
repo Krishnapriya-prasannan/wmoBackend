@@ -14,6 +14,8 @@ def create_location():
     data = request.get_json()
     result = add_warehouse_location(
         data.get('location_id'),
+        data.get('aisle_label'),
+        data.get('row_num'),
         data.get('x_coord'),
         data.get('y_coord'),
         data.get('max_size'),

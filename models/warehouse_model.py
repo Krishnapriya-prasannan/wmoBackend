@@ -1,13 +1,13 @@
 from db import get_db, close_db
 
-def add_warehouse_location(location_id, x_coord, y_coord, max_size, max_weight):
+def add_warehouse_location(location_id,aisle_label, row_num, x_coord, y_coord, max_size, max_weight):
     try:
         db = get_db()
         cursor = db.cursor()
         cursor.execute("""
-            INSERT INTO warehouse_locations (location_id, x_coord, y_coord, max_size, max_weight)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (location_id, x_coord, y_coord, max_size, max_weight))
+            INSERT INTO warehouse_locations (location_id, aisle_label,row_num, x_coord, y_coord, max_size, max_weight)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (location_id, aisle_label, row_num, x_coord, y_coord, max_size, max_weight))
         db.commit()
         return True
     except Exception as e:
