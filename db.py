@@ -7,11 +7,11 @@ import os
 load_dotenv()
 
 DB_CONFIG = {
-    'host': os.getenv('DB_HOST'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME'),
-    'port': os.getenv('DB_PORT')
+    'host': os.getenv('DB_HOST', '127.0.0.1'),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'database': os.getenv('DB_NAME', 'your_db_name'),
+    'port': int(os.getenv('DB_PORT', 3306))  # ✅ Convert to int, default 3306
 }
 
 def get_db():
@@ -30,5 +30,5 @@ def get_db():
         return None
 
 def close_db(connection):
-    if connection.is_connected():
+    if connection and connection.is_connected():
         connection.close()

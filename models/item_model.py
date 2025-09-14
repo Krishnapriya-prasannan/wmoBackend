@@ -55,3 +55,4 @@ def get_item_by_id(item_id):
     finally:
         if db:
             close_db(db)
+            
